@@ -161,7 +161,7 @@ void DisplayShoppingCart()
 Product? FindProduct(string code)
 {
     foreach (var product in products)
-        if (product.Code == code)
+        if (product.Code.Equals(code, StringComparison.CurrentCultureIgnoreCase))
             return product;
 
     return null;
