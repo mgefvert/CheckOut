@@ -97,7 +97,15 @@ void AddToCart()
     var units = int.Parse(unitString);
 
     // Add the new code and unit count to the shopping cart
-    shoppingCart.Add(new Cart(code, units));
+    var cartItem = FindCartItem(code);
+    if (cartItem == null)
+    {
+        shoppingCart.Add(new Cart(code, units));
+    }
+    else
+    {
+        cartItem.Count += units;
+    }
 }
 
 // Clear the shopping cart.
@@ -158,6 +166,17 @@ void DisplayShoppingCart()
 
 // Find a product in the product database by looking up the code. If we don't find a product,
 // just return `null`.
+Cart? FindCartItem(string code)
+{
+    foreach (var cartItem in shoppingCart)
+        if (cartItem.Code.Equals(code, StringComparison.CurrentCultureIgnoreCase))
+            return cartItem;
+
+    return null;
+}
+
+// Find a product in the product database by looking up the code. If we don't find a product,
+// just return `null`.
 Product? FindProduct(string code)
 {
     foreach (var product in products)
@@ -197,7 +216,17 @@ void Pause()
 }
 
 // Define a "class", or "record", called Cart which contains a ProductCode and a unit count.
-record Cart(string Code, int Count);
+class Cart
+{
+    public Cart(string code, int units)
+    {
+        Code = code;
+        Count = units;
+    }
+
+    public string Code { get; set; }
+    public int Count { get; set; }
+}
 
 // Define a class or record called Product which contains a ProductCode, ProductName, and a Unit Price.
 record Product(string Code, string Name, decimal Price);
