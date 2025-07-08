@@ -79,6 +79,7 @@ void AddToCart()
     var product = FindProduct(code);
     if (product == null)
     {
+        Console.WriteLine();
         Console.WriteLine("ERROR: Unknown product code");
         Pause();
         return;
@@ -95,6 +96,13 @@ void AddToCart()
     Console.Write("NUMBER OF UNITS (1 .. ) : ");
     var unitString = Console.ReadLine() ?? "1";
     var units = int.Parse(unitString);
+    if (units <= 0)
+    {
+        Console.WriteLine();
+        Console.WriteLine("ERROR: Invalid number of units");
+        Pause();
+        return;
+    }
 
     // Add the new code and unit count to the shopping cart
     var cartItem = FindCartItem(code);
