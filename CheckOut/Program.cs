@@ -38,7 +38,7 @@ while (!done)
 bool HandleUserChoice()
 {
     // What does the user want to do?
-    Console.WriteLine("SELECT:  A = Add item, C = Clear, L = List products, R = Remove, P = Purchase");
+    Console.WriteLine("SELECT:  A = Add item, C = Clear, L = List products, R = Remove all, P = Purchase, X = Remove");
     var key = Console.ReadKey();
     Console.WriteLine();
     Console.WriteLine();
@@ -63,6 +63,10 @@ bool HandleUserChoice()
             return true;
 
         case ConsoleKey.R:
+            RemoveAllFromCart();
+            return false;
+        
+        case ConsoleKey.X:
             RemoveFromCart();
             return false;
 
@@ -147,7 +151,7 @@ void DisplayProducts()
 
     foreach (var product in products)
     {
-        Console.WriteLine($"{product.Code,10} {product.Name,-30} {product.Price,10}");
+        Console.WriteLine($"{product.Code,10} {product.Name,-30} {product.Price,10:N2}");
     }
 
     Console.WriteLine();
@@ -166,18 +170,18 @@ void DisplayShoppingCart()
         if (product == null)
             throw new Exception("Undefined product in shopping cart.");
 
-        Console.WriteLine($"{product.Code,10}      {product.Price,10}  {item.Count,5}  {product.Price * item.Count,10}");
+        Console.WriteLine($"{product.Code,10}      {product.Price,10:N2}  {item.Count,5}  {product.Price * item.Count,10:N2}");
         total += product.Price * item.Count;
     }
 
     Console.WriteLine();
-    Console.WriteLine($"SUBTOTAL                           {total,10}");
+    Console.WriteLine($"SUBTOTAL                           {total,10:N2}");
     Console.WriteLine();
 
     var tax = (decimal)Math.Round(taxRate * (double)total, 2, MidpointRounding.AwayFromZero);
 
-    Console.WriteLine($"TAX                                {tax,10}");
-    Console.WriteLine($"TOTAL                              {tax + total,10}");
+    Console.WriteLine($"TAX                                {tax,10:N2}");
+    Console.WriteLine($"TOTAL                              {tax + total,10:N2}");
     Console.WriteLine();
 }
 
@@ -204,7 +208,7 @@ Product? FindProduct(string code)
 }
 
 // Ask the user which product to remove from the cart, and then remove all instances of that.
-void RemoveFromCart()
+void RemoveAllFromCart()
 {
     Console.Write("PRODUCT CODE : ");
     var code    = Console.ReadLine();
@@ -222,6 +226,56 @@ void RemoveFromCart()
         else
             i++;
     }
+}
+
+void RemoveFromCart()
+{
+    Console.Write("PRODUCT CODE : ");
+    var code = Console.ReadLine();
+
+    // Did the user actually enter anything meaningful?
+    if (string.IsNullOrWhiteSpace(code))
+        return;
+
+    code = code.Trim();
+
+    // Find the product - look it up by the product code we entered
+    var product = FindProduct(code);
+    if (product == null)
+    {
+        Console.WriteLine();
+        Console.WriteLine("ERROR: Unknown product code");
+        Pause();
+        return;
+    }
+
+    // Write out the product information
+    Console.WriteLine();
+    Console.WriteLine($"PRODUCT CODE : {product.Code}");
+    Console.WriteLine($"PRODUCT NAME : {product.Name}");
+    Console.WriteLine($"UNIT PRICE   : {product.Price}");
+    Console.WriteLine();
+
+    // Ask for unit count
+    Console.Write("NUMBER OF UNITS TO REMOVE (1 .. ) : ");
+    var unitString = Console.ReadLine() ?? "1";
+    var units = int.Parse(unitString);
+    if (units <= 0)
+    {
+        Console.WriteLine();
+        Console.WriteLine("ERROR: Invalid number of units");
+        Pause();
+        return;
+    }
+
+    // Add the new code and unit count to the shopping cart
+    var cartItem = FindCartItem(code);
+    if (cartItem == null)
+        return;
+
+    cartItem.Count -= units;
+    if (cartItem.Count <= 0)
+        shoppingCart.Remove(cartItem);
 }
 
 // Pause and wait for the user
