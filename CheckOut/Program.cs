@@ -21,7 +21,16 @@ while (!done)
     DisplayShoppingCart();
 
     // Handle the user keypress
-    done = HandleUserChoice();
+    try
+    {
+        done = HandleUserChoice();
+    }
+    catch (Exception e)
+    {
+        Console.WriteLine(e.Message);
+        Pause();
+    }
+    
 }
 
 // Display a small menu, wait for the user to press something, and then do the appropriate action.
