@@ -1,17 +1,13 @@
 ﻿// Create a product database with a ProductCode, Name, and a Unit Price
 
 using System.Text.Json.Nodes;
+using CheckOut;
 using Newtonsoft.Json;
 
-var products = new List<Product>
-{
-    new Product("BOT10", "Shortbot", 34.99m),
-    new Product("BOT50", "Mixbot", 84.99m),
-    new Product("BOT90", "Megabot", 299.99m),
-};
+var database = new ProductDatabase();
 
-LoadProducts();
-SaveProducts();
+database.LoadFromFile();
+database.SaveToFile();
 
 // Create a shopping cart with a list of Cart items
 var shoppingCart = new List<Cart>();
@@ -99,7 +95,7 @@ void AddProduct()
     code = code.Trim();
    
     // Find the product - look it up by the product code we entered
-    var product = FindProduct(code);
+    var product = database.Find(code);
     if (product != null)
     {
         Console.WriteLine("Product already exists in database.");
@@ -115,9 +111,9 @@ void AddProduct()
     var price = decimal.Parse(Console.ReadLine());
     
     var newProduct = new Product(code, name, price);
-    products.Add(newProduct);
+    database.Add(newProduct);
     
-    SaveProducts();
+    database.SaveToFile();
 }
 
 // Add an item to the shopping cart. Ask for the product code, and a number of units, and then
@@ -134,7 +130,7 @@ void AddToCart()
     code = code.Trim();
 
     // Find the product - look it up by the product code we entered
-    var product = FindProduct(code);
+    var product = database.Find(code);
     if (product == null)
     {
         Console.WriteLine();
@@ -194,13 +190,13 @@ void DisplayProducts()
 {
     Console.WriteLine("CURRENT PRODUCT LIST:");
 
-    foreach (var product in products)
+    foreach (var product in database.Products)
     {
         Console.WriteLine($"{product.Code,10} {product.Name,-30} {product.Price,10:N2}");
     }
 
     Console.WriteLine();
-    Console.WriteLine($"{products.Count} PRODUCTS IN DATABASE");
+    Console.WriteLine($"{database.Products.Count} PRODUCTS IN DATABASE");
 }
 
 // Display the shopping cart along with subtotal, tax, and grand total.
@@ -211,7 +207,7 @@ void DisplayShoppingCart()
     var total = 0m;
     foreach (var item in shoppingCart)
     {
-        var product = FindProduct(item.Code);
+        var product = database.Find(item.Code);
         if (product == null)
             throw new Exception("Undefined product in shopping cart.");
 
@@ -240,29 +236,6 @@ Cart? FindCartItem(string code)
 
     return null;
 }
-
-// Find a product in the product database by looking up the code. If we don't find a product,
-// just return `null`.
-Product? FindProduct(string code)
-{
-    foreach (var product in products)
-        if (product.Code.Equals(code, StringComparison.CurrentCultureIgnoreCase))
-            return product;
-
-    return null;
-}
-
-void LoadProducts()
-{
-    if (!File.Exists("products.json"))
-        return;
-    
-    products = JsonConvert.DeserializeObject<List<Product>>(File.ReadAllText("products.json"));
-    products = products
-        .OrderBy(x => x.Code)
-        .ToList();
-}
-
 
 void RemoveAllFromCart()
 {
@@ -297,7 +270,7 @@ void RemoveFromCart()
     code = code.Trim();
 
     // Find the product - look it up by the product code we entered
-    var product = FindProduct(code);
+    var product = database.Find(code);
     if (product == null)
     {
         Console.WriteLine();
@@ -335,44 +308,10 @@ void RemoveFromCart()
         shoppingCart.Remove(cartItem);
 }
 
-void SaveProducts()
-{
-    var json = JsonConvert.SerializeObject(products, Formatting.Indented);
-    File.WriteAllText("products.json", json);
-}
-
 // Pause and wait for the user
 void Pause()
 {
     Console.WriteLine();
     Console.WriteLine("Press ENTER to continue...");
     Console.ReadLine();
-}
-
-// Define a "class", or "record", called Cart which contains a ProductCode and a unit count.
-class Cart
-{
-    public Cart(string code, int units)
-    {
-        Code = code;
-        Count = units;
-    }
-
-    public string Code { get; set; }
-    public int Count { get; set; }
-}
-
-// Define a class or record called Product which contains a ProductCode, ProductName, and a Unit Price.
-class Product
-{
-    public Product(string code, string name, decimal price)
-    {
-        Code = code;
-        Name = name;
-        Price = price;
-    }
-
-    public string Code { get; set; }
-    public string Name { get; set; }
-    public decimal Price { get; set; }
 }
