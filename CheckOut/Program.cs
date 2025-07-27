@@ -1,10 +1,17 @@
 ﻿// Create a product database with a ProductCode, Name, and a Unit Price
-var products = new[]
+
+using System.Text.Json.Nodes;
+using Newtonsoft.Json;
+
+var products = new List<Product>
 {
     new Product("BOT10", "Shortbot", 34.99m),
     new Product("BOT50", "Mixbot", 84.99m),
     new Product("BOT90", "Megabot", 299.99m),
 };
+
+LoadProducts();
+SaveProducts();
 
 // Create a shopping cart with a list of Cart items
 var shoppingCart = new List<Cart>();
@@ -38,7 +45,7 @@ while (!done)
 bool HandleUserChoice()
 {
     // What does the user want to do?
-    Console.WriteLine("SELECT:  A = Add item, C = Clear, L = List products, R = Remove all, P = Purchase, X = Remove");
+    Console.WriteLine("SELECT:  A = Add item, C = Clear, L = List products, N = Add New Product, P = Purchase, R = Remove all,  X = Remove");
     var key = Console.ReadKey();
     Console.WriteLine();
     Console.WriteLine();
@@ -57,6 +64,11 @@ bool HandleUserChoice()
             DisplayProducts();
             Pause();
             return false;
+        
+        case ConsoleKey.N:
+            AddProduct();
+            Pause();
+            return false;
 
         case ConsoleKey.P:
             Console.WriteLine("THANK YOU FOR YOUR PURCHASE. PLEASE COME AGAIN.");
@@ -73,6 +85,39 @@ bool HandleUserChoice()
         default:
             return false;
     }
+}
+
+void AddProduct()
+{
+    Console.Write("PRODUCT CODE : ");
+    var code = Console.ReadLine();
+
+    // Did the user actually enter anything meaningful?
+    if (string.IsNullOrWhiteSpace(code))
+        return;
+    
+    code = code.Trim();
+   
+    // Find the product - look it up by the product code we entered
+    var product = FindProduct(code);
+    if (product != null)
+    {
+        Console.WriteLine("Product already exists in database.");
+        return;
+    }
+    
+    Console.Write("PRODUCT NAME : ");
+    var name = Console.ReadLine();
+    if (string.IsNullOrWhiteSpace(name))
+        return;
+    
+    Console.Write("PRODUCT PRICE : ");
+    var price = decimal.Parse(Console.ReadLine());
+    
+    var newProduct = new Product(code, name, price);
+    products.Add(newProduct);
+    
+    SaveProducts();
 }
 
 // Add an item to the shopping cart. Ask for the product code, and a number of units, and then
@@ -155,7 +200,7 @@ void DisplayProducts()
     }
 
     Console.WriteLine();
-    Console.WriteLine($"{products.Length} PRODUCTS IN DATABASE");
+    Console.WriteLine($"{products.Count} PRODUCTS IN DATABASE");
 }
 
 // Display the shopping cart along with subtotal, tax, and grand total.
@@ -207,7 +252,18 @@ Product? FindProduct(string code)
     return null;
 }
 
-// Ask the user which product to remove from the cart, and then remove all instances of that.
+void LoadProducts()
+{
+    if (!File.Exists("products.json"))
+        return;
+    
+    products = JsonConvert.DeserializeObject<List<Product>>(File.ReadAllText("products.json"));
+    products = products
+        .OrderBy(x => x.Code)
+        .ToList();
+}
+
+
 void RemoveAllFromCart()
 {
     Console.Write("PRODUCT CODE : ");
@@ -228,6 +284,7 @@ void RemoveAllFromCart()
     }
 }
 
+// Ask the user which product to remove from the cart, and then remove all instances of that.
 void RemoveFromCart()
 {
     Console.Write("PRODUCT CODE : ");
@@ -278,6 +335,12 @@ void RemoveFromCart()
         shoppingCart.Remove(cartItem);
 }
 
+void SaveProducts()
+{
+    var json = JsonConvert.SerializeObject(products, Formatting.Indented);
+    File.WriteAllText("products.json", json);
+}
+
 // Pause and wait for the user
 void Pause()
 {
@@ -300,4 +363,16 @@ class Cart
 }
 
 // Define a class or record called Product which contains a ProductCode, ProductName, and a Unit Price.
-record Product(string Code, string Name, decimal Price);
+class Product
+{
+    public Product(string code, string name, decimal price)
+    {
+        Code = code;
+        Name = name;
+        Price = price;
+    }
+
+    public string Code { get; set; }
+    public string Name { get; set; }
+    public decimal Price { get; set; }
+}
